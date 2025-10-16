@@ -1,6 +1,6 @@
 <?php 
-include 'header.php'
-?>>
+include 'header.php';
+?>
 
 <div class="text-center py-16 px-6 bg-white rounded-lg shadow-xl">
     <h1 class="text-4xl md:text-5xl font-extrabold mb-4">Nereye Gitmek İstersiniz?</h1>
@@ -22,4 +22,3 @@ include 'header.php'
 <?php 
 include 'footer.php'
 ?>
-
