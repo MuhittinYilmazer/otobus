@@ -86,7 +86,7 @@ include 'header.php';
                     <td class="p-4"><?php echo $booking['seat_number']; ?></td>
                     <td class="p-4"><?php echo number_format($booking['price_paid'], 2); ?> TL</td>
                     <td class="p-4">
-                         <a href="generate_pdf.php?booking_id=<?php echo $booking['id']; ?>" class="text-blue-500 hover:underline mr-4" target="_blank">PDF</a>
+                         <a href="biletgoruntule.php?booking_id=<?php echo $booking['id']; ?>" class="text-blue-500 hover:underline mr-4" target="_blank">PDF</a>
                          <?php if ($can_cancel): ?>
                          <form action="hesabim.php" method="POST" class="inline" onsubmit="return confirm('Bu bileti iptal etmek istediğinize emin misiniz?');">
                              <input type="hidden" name="booking_id" value="<?php echo $booking['id']; ?>">

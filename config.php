@@ -2,8 +2,8 @@
 // Configuration and Database Initialization
 
 // Define the database file path.
-define('DB_PATH', 'database/database.sqlite');
-define('DB_DIR', 'database');
+define('DB_PATH', __DIR__ . '/database/database.sqlite'); // <-- DEĞİŞİKLİK BURADA
+define('DB_DIR', __DIR__ . '/database'); // <-- BURAYI DA GÜNCELLEYELİM
 
 /**
  * Initializes the database connection and creates tables if they don't exist.
