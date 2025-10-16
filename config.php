@@ -5,7 +5,7 @@ define('DB_DIR', __DIR__ . '/database');
 
 
 function get_db_connection() {
-    // dosya yoksa oluştur
+    // dizin yoksa oluştur
     if (!is_dir(DB_DIR)) {
         mkdir(DB_DIR, 0777, true);
     }
@@ -16,26 +16,32 @@ function get_db_connection() {
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
-        // user tablosu yoksa oluştur ve başlangıç verisi ekle
-        $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='users'");
-        if ($stmt->fetch() === false) {
+        // user tablosu var mı kontrol et yoksa tüm tabloları oluştur
+        $query = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='users'");
+        if ($query->fetch() === false) {
             // tabloları oluştur
+
+            // users tablosu
             $pdo->exec("CREATE TABLE users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT, fullname TEXT NOT NULL, email TEXT NOT NULL UNIQUE,
                 password TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'User', company_id INTEGER,
                 balance REAL NOT NULL DEFAULT 0.0, FOREIGN KEY (company_id) REFERENCES companies(id)
             )");
+            // companies tablosu
             $pdo->exec("CREATE TABLE companies (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, created_at TEXT DEFAULT CURRENT_TIMESTAMP)");
+            // trips tablosu
             $pdo->exec("CREATE TABLE trips (
                 id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER NOT NULL, departure_location TEXT NOT NULL,
                 arrival_location TEXT NOT NULL, departure_time TEXT NOT NULL, price REAL NOT NULL,
                 seat_count INTEGER NOT NULL, FOREIGN KEY (company_id) REFERENCES companies(id)
             )");
+            // bookings tablosu
             $pdo->exec("CREATE TABLE bookings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, trip_id INTEGER NOT NULL,
                 seat_number INTEGER NOT NULL, price_paid REAL NOT NULL, booking_time TEXT DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id), FOREIGN KEY (trip_id) REFERENCES trips(id)
             )");
+            // coupons tablosu
             $pdo->exec("CREATE TABLE coupons (
                 id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL UNIQUE, discount_rate REAL NOT NULL,
                 usage_limit INTEGER NOT NULL, expiry_date TEXT NOT NULL, company_id INTEGER,

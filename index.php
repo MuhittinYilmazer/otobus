@@ -9,11 +9,11 @@ include 'header.php';
         
         <div class="w-full">
             <label for="from" class="sr-only">Nereden</label>
-            <input type="text" id="from" name="from" placeholder="Nereden" required class="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500">
+            <input type="text" name="from" placeholder="Nereden" required class="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500">
         </div>
         <div class="w-full">
             <label for="to" class="sr-only">Nereye</label>
-            <input type="text" id="to" name="to" placeholder="Nereye" required class="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500">
+            <input type="text" name="to" placeholder="Nereye" required class="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500">
         </div>
         <button type="submit" class="w-full md:w-auto bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 font-semibold shadow-md transition-transform transform hover:scale-105">Sefer Bul</button>
     </form>

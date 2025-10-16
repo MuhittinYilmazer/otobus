@@ -1,10 +1,6 @@
 <?php
-// oturum başlat
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 require_once 'config.php';
-require_once 'helpers.php';
+include 'header.php';
 
 // post isteği ile giriş yapma
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -29,8 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-include 'header.php';
 ?>
+
 <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-8 mt-10">
     <h1 class="text-2xl font-bold mb-6 text-center">Giriş Yap</h1>
     <?php display_flash_message(); ?>

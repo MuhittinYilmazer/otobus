@@ -3,11 +3,15 @@ session_start();
 require_once 'config.php';
 require_once 'helpers.php';
 
-check_permission(['User']); // Sadece 'User' rolündeki kullanıcılar erişebilir.
+check_permission(['User']);
+if (!is_logged_in()) {
+    set_flash_message('Bilet almak için giriş yapmalısınız.', 'error');
+    redirect('login.php');
+}
 
 $trip_id = $_GET['trip_id'] ?? null;
 
-// --- BİLET SATIN ALMA İŞLEMİ (POST) ---
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $trip_id = $_POST['trip_id'] ?? null;
     $seat_number = $_POST['seat_number'] ?? null;
@@ -23,38 +27,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $trip = $pdo->query("SELECT * FROM trips WHERE id = " . $pdo->quote($trip_id))->fetch();
     $user = $pdo->query("SELECT balance FROM users WHERE id = " . $pdo->quote($user_id))->fetch();
 
-    $stmt = $pdo->prepare("SELECT id FROM bookings WHERE trip_id = ? AND seat_number = ?");
-    $stmt->execute([$trip_id, $seat_number]);
-    if ($stmt->fetch()) {
+    $query = $pdo->prepare("SELECT id FROM bookings WHERE trip_id = ? AND seat_number = ?");
+    $query->execute([$trip_id, $seat_number]);
+    if ($query->fetch()) {
         $pdo->rollBack();
         set_flash_message('Seçtiğiniz koltuk siz işlem yaparken doldu.', 'error');
         redirect("biletal.php?trip_id=$trip_id");
     }
 
     $final_price = $trip['price'];
+    // kupon kodu varsa kontrol et
     if (!empty($coupon_code)) {
-        $stmt = $pdo->prepare("SELECT * FROM coupons WHERE code = ? AND expiry_date >= date('now') AND usage_limit > 0");
-        $stmt->execute([$coupon_code]);
-        $coupon = $stmt->fetch();
+        $query = $pdo->prepare("SELECT * FROM coupons WHERE code = ? AND expiry_date >= date('now') AND usage_limit > 0");
+        $query->execute([$coupon_code]);
+        $coupon = $query->fetch();
+        // kupon boş değilse ve geçerliyse indirim uygula
         if ($coupon && (is_null($coupon['company_id']) || $coupon['company_id'] == $trip['company_id'])) {
             $final_price *= (1 - $coupon['discount_rate']);
+            // kupon kullanım sayısını azalt
             $pdo->prepare("UPDATE coupons SET usage_limit = usage_limit - 1 WHERE id = ?")->execute([$coupon['id']]);
         } else {
             set_flash_message('Geçersiz kupon kodu.', 'error');
         }
     }
 
+    // bakiye yetersizse hata ver
     if ($user['balance'] < $final_price) {
         $pdo->rollBack();
         set_flash_message('Yetersiz bakiye.', 'error');
         redirect("biletal.php?trip_id=$trip_id");
     }
 
+    // bakiyeyi düş ve güncelle
     $new_balance = $user['balance'] - $final_price;
     $pdo->prepare("UPDATE users SET balance = ? WHERE id = ?")->execute([$new_balance, $user_id]);
     
-    $stmt = $pdo->prepare("INSERT INTO bookings (user_id, trip_id, seat_number, price_paid) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$user_id, $trip_id, $seat_number, $final_price]);
+    // bileti oluştur
+    $query = $pdo->prepare("INSERT INTO bookings (user_id, trip_id, seat_number, price_paid) VALUES (?, ?, ?, ?)");
+    $query->execute([$user_id, $trip_id, $seat_number, $final_price]);
     
     $pdo->commit();
 
@@ -62,14 +72,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('hesabim.php');
 }
 
-// --- SAYFA GÖRÜNÜMÜ (GET) ---
+// id yoksa yönlendir
 if (!$trip_id) {
     redirect('index.php');
 }
 
-$stmt = $pdo->prepare("SELECT t.*, c.name as company_name FROM trips t JOIN companies c ON t.company_id = c.id WHERE t.id = ?");
-$stmt->execute([$trip_id]);
-$trip = $stmt->fetch();
+$query = $pdo->prepare("SELECT t.*, c.name as company_name FROM trips t JOIN companies c ON t.company_id = c.id WHERE t.id = ?");
+$query->execute([$trip_id]);
+$trip = $query->fetch();
 if (!$trip) {
     set_flash_message('Sefer bulunamadı.', 'error');
     redirect('index.php');

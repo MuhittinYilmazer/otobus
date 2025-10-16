@@ -9,7 +9,7 @@ $user_id = $_SESSION['user_id'];
 
 if(!$booking_id) die('Geçersiz bilet.');
 
-$stmt = $pdo->prepare("
+$query = $pdo->prepare("
     SELECT 
         b.id as booking_id, b.seat_number, b.price_paid,
         t.departure_location, t.arrival_location, t.departure_time,
@@ -21,8 +21,8 @@ $stmt = $pdo->prepare("
     JOIN users u ON b.user_id = u.id
     WHERE b.id = ? AND b.user_id = ?
 ");
-$stmt->execute([$booking_id, $user_id]);
-$ticket = $stmt->fetch();
+$query->execute([$booking_id, $user_id]);
+$ticket = $query->fetch();
 
 if (!$ticket) {
     die('Bilet bulunamadı veya bu bileti görüntüleme yetkiniz yok.');

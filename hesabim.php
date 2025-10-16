@@ -4,9 +4,8 @@ require_once 'config.php';
 require_once 'helpers.php';
 check_permission(['User']);
 
-// --- FORM İŞLEMLERİ (POST) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Bakiye ekleme
+    // bakiye ekleme
     if (isset($_POST['add_balance'])) {
         $stmt = $pdo->prepare("UPDATE users SET balance = balance + 1000 WHERE id = ?");
         $stmt->execute([$_SESSION['user_id']]);
@@ -14,20 +13,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('hesabim.php');
     }
 
-    // Bilet iptal etme
+    // bilet iptal etme
     if (isset($_POST['cancel_booking'])) {
         $booking_id = $_POST['booking_id'];
         $user_id = $_SESSION['user_id'];
 
         $pdo->beginTransaction();
-        $stmt = $pdo->prepare("SELECT b.*, t.departure_time FROM bookings b JOIN trips t ON b.trip_id = t.id WHERE b.id = ? AND b.user_id = ?");
-        $stmt->execute([$booking_id, $user_id]);
-        $booking = $stmt->fetch();
+        $query = $pdo->prepare("SELECT b.*, t.departure_time FROM bookings b JOIN trips t ON b.trip_id = t.id WHERE b.id = ? AND b.user_id = ?");
+        $query->execute([$booking_id, $user_id]);
+        $booking = $query->fetch();
 
         if ($booking) {
+            // kalkışa 1 saatten az kaldıysa iptal edilemez
             $can_cancel = (new DateTime($booking['departure_time']) > (new DateTime())->add(new DateInterval('PT1H')));
             if ($can_cancel) {
+                // ücret iade etme
                 $pdo->prepare("UPDATE users SET balance = balance + ? WHERE id = ?")->execute([$booking['price_paid'], $user_id]);
+                // bileti silme
                 $pdo->prepare("DELETE FROM bookings WHERE id = ?")->execute([$booking_id]);
                 $pdo->commit();
                 set_flash_message('Bilet iptal edildi ve ücret iade edildi.', 'success');
@@ -40,15 +42,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// --- SAYFA GÖRÜNÜMÜ (GET) ---
-// Aşağıdaki kodlar sayfa her yüklendiğinde çalışır ve biletleri listeler.
-$stmt = $pdo->prepare("SELECT balance FROM users WHERE id = ?");
-$stmt->execute([$_SESSION['user_id']]);
-$balance = $stmt->fetchColumn();
+// bakiye bilgisini çek
+$query = $pdo->prepare("SELECT balance FROM users WHERE id = ?");
+$query->execute([$_SESSION['user_id']]);
+$balance = $query->fetchColumn();
 
-$stmt = $pdo->prepare("SELECT b.*, t.departure_location, t.arrival_location, t.departure_time, c.name as company_name FROM bookings b JOIN trips t ON b.trip_id = t.id JOIN companies c ON t.company_id = c.id WHERE b.user_id = ? ORDER BY t.departure_time DESC");
-$stmt->execute([$_SESSION['user_id']]);
-$bookings = $stmt->fetchAll();
+// alınan biletleri çek
+$query = $pdo->prepare("SELECT b.*, t.departure_location, t.arrival_location, t.departure_time, c.name as company_name FROM bookings b JOIN trips t ON b.trip_id = t.id JOIN companies c ON t.company_id = c.id WHERE b.user_id = ? ORDER BY t.departure_time DESC");
+$query->execute([$_SESSION['user_id']]);
+$bookings = $query->fetchAll();
 
 include 'header.php';
 ?>
@@ -77,22 +79,20 @@ include 'header.php';
             <?php if (empty($bookings)): ?>
                 <tr><td colspan="5" class="p-4 text-center">Hiç biletiniz bulunmuyor.</td></tr>
             <?php else: ?>
-                <?php foreach($bookings as $booking): 
-                    $can_cancel = (new DateTime($booking['departure_time']) > (new DateTime())->add(new DateInterval('PT1H')));
-                ?>
+                <?php foreach($bookings as $booking): ?>
                 <tr class="border-t">
-                    <td class="p-4"><?php echo htmlspecialchars($booking['departure_location']) . ' - ' . htmlspecialchars($booking['arrival_location']); ?> <br><small>(<?php echo htmlspecialchars($booking['company_name']); ?>)</small></td>
+                    <td class="p-4"><?php echo $booking['departure_location'] . ' - ' . $booking['arrival_location']; ?> <br><small>(<?php echo $booking['company_name']; ?>)</small></td>
                     <td class="p-4"><?php echo date('d M Y, H:i', strtotime($booking['departure_time'])); ?></td>
                     <td class="p-4"><?php echo $booking['seat_number']; ?></td>
                     <td class="p-4"><?php echo number_format($booking['price_paid'], 2); ?> TL</td>
                     <td class="p-4">
                          <a href="biletgoruntule.php?booking_id=<?php echo $booking['id']; ?>" class="text-blue-500 hover:underline mr-4" target="_blank">PDF</a>
-                         <?php if ($can_cancel): ?>
+                         
                          <form action="hesabim.php" method="POST" class="inline" onsubmit="return confirm('Bu bileti iptal etmek istediğinize emin misiniz?');">
                              <input type="hidden" name="booking_id" value="<?php echo $booking['id']; ?>">
                              <button type="submit" name="cancel_booking" class="text-red-500 hover:underline">İptal Et</button>
                          </form>
-                         <?php endif; ?>
+                         
                     </td>
                 </tr>
                 <?php endforeach; ?>
