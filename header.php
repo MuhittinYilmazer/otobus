@@ -1,5 +1,11 @@
+<?php
+// Session'ı burada başlatmak, her sayfada tekrar yazma ihtiyacını ortadan kaldırır.
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once 'helpers.php';
+?>
 <!DOCTYPE html>
-<?php require_once 'helpers.php'?>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -26,14 +32,20 @@
             <a href="index.php" class="text-2xl font-bold text-blue-600">BiletAl</a>
             <div class="flex items-center space-x-4">
                 <a href="index.php" class="hover:text-blue-500">Ana Sayfa</a>
-                	<?php if(is_logged_in()){?>
-                   <?php }else{?>
-					 <a href="login.php" class="hover:text-blue-500">Giriş Yap</a>
-                    <a href="register.php" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Kayıt Ol</a><?php }?>
-               
+                <?php if (is_logged_in()): ?>
+                    <a href="hesabim.php" class="hover:text-blue-500">Hesabım</a>
+                    <?php if ($_SESSION['role'] === 'Admin'): ?>
+                        <a href="admin/" class="hover:text-blue-500">Admin Paneli</a>
+                    <?php elseif ($_SESSION['role'] === 'Firma Admin'): ?>
+                        <a href="firmaadmin/" class="hover:text-blue-500">Firma Paneli</a>
+                    <?php endif; ?>
+                    <a href="logout.php" class="hover:text-blue-500">Çıkış Yap</a>
+                <?php else: ?>
+                    <a href="login.php" class="hover:text-blue-500">Giriş Yap</a>
+                    <a href="register.php" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Kayıt Ol</a>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
     <main class="container mx-auto p-4 md:p-8">
-        
-
+        <?php display_flash_message(); ?>
