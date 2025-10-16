@@ -1,4 +1,9 @@
-<?php require_once 'header.php'; ?>
+<?php 
+session_start();
+require_once 'config.php';
+require_once 'helpers.php';
+include 'header.php'; 
+?>
 <h1 class="text-3xl font-bold mb-6">Sefer Sonuçları</h1>
  <?php
 $from = $_GET['from'] ?? '';
@@ -22,7 +27,11 @@ if (empty($from) || empty($to)) {
                     </div>
                     <div class="text-right">
                         <p class="text-2xl font-bold text-blue-600"><?php echo number_format($trip['price'], 2); ?> TL</p>
-                        <a href="index.php?page=buy_ticket&trip_id=<?php echo $trip['id']; ?>" class="mt-2 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Bilet Al</a>
+                        <?php if (is_logged_in()): ?>
+                            <a href="biletal.php?trip_id=<?php echo $trip['id']; ?>" class="mt-2 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Bilet Al</a>
+                        <?php else: ?>
+                            <a href="login.php" onclick="alert('Bilet almak için lütfen giriş yapın.');" class="mt-2 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Bilet Al</a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

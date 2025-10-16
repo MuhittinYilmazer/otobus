@@ -1,86 +1,126 @@
 <?php
+session_start();
+require_once 'config.php';
+require_once 'helpers.php';
 
-if (!is_logged_in()) {
-    set_flash_message('Bilet almak için giriş yapmalısınız.', 'error');
-    redirect('index.php?page=login');
+check_permission(['User']); // Sadece 'User' rolündeki kullanıcılar erişebilir.
+
+$trip_id = $_GET['trip_id'] ?? null;
+
+// --- BİLET SATIN ALMA İŞLEMİ (POST) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $trip_id = $_POST['trip_id'] ?? null;
+    $seat_number = $_POST['seat_number'] ?? null;
+    $coupon_code = trim($_POST['coupon_code'] ?? '');
+    $user_id = $_SESSION['user_id'];
+
+    if (empty($seat_number) || empty($trip_id)) {
+        set_flash_message('Lütfen bir koltuk seçin.', 'error');
+        redirect("biletal.php?trip_id=$trip_id");
+    }
+
+    $pdo->beginTransaction();
+    $trip = $pdo->query("SELECT * FROM trips WHERE id = " . $pdo->quote($trip_id))->fetch();
+    $user = $pdo->query("SELECT balance FROM users WHERE id = " . $pdo->quote($user_id))->fetch();
+
+    $stmt = $pdo->prepare("SELECT id FROM bookings WHERE trip_id = ? AND seat_number = ?");
+    $stmt->execute([$trip_id, $seat_number]);
+    if ($stmt->fetch()) {
+        $pdo->rollBack();
+        set_flash_message('Seçtiğiniz koltuk siz işlem yaparken doldu.', 'error');
+        redirect("biletal.php?trip_id=$trip_id");
+    }
+
+    $final_price = $trip['price'];
+    if (!empty($coupon_code)) {
+        $stmt = $pdo->prepare("SELECT * FROM coupons WHERE code = ? AND expiry_date >= date('now') AND usage_limit > 0");
+        $stmt->execute([$coupon_code]);
+        $coupon = $stmt->fetch();
+        if ($coupon && (is_null($coupon['company_id']) || $coupon['company_id'] == $trip['company_id'])) {
+            $final_price *= (1 - $coupon['discount_rate']);
+            $pdo->prepare("UPDATE coupons SET usage_limit = usage_limit - 1 WHERE id = ?")->execute([$coupon['id']]);
+        } else {
+            set_flash_message('Geçersiz kupon kodu.', 'error');
+        }
+    }
+
+    if ($user['balance'] < $final_price) {
+        $pdo->rollBack();
+        set_flash_message('Yetersiz bakiye.', 'error');
+        redirect("biletal.php?trip_id=$trip_id");
+    }
+
+    $new_balance = $user['balance'] - $final_price;
+    $pdo->prepare("UPDATE users SET balance = ? WHERE id = ?")->execute([$new_balance, $user_id]);
+    
+    $stmt = $pdo->prepare("INSERT INTO bookings (user_id, trip_id, seat_number, price_paid) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$user_id, $trip_id, $seat_number, $final_price]);
+    
+    $pdo->commit();
+
+    set_flash_message('Biletiniz başarıyla satın alındı!', 'success');
+    redirect('hesabim.php');
 }
-check_permission(['User']);
 
-$trip_id = (int)($_GET['trip_id'] ?? 0);
+// --- SAYFA GÖRÜNÜMÜ (GET) ---
 if (!$trip_id) {
-    echo "<p>Geçersiz sefer ID.</p>";
-    return;
+    redirect('index.php');
 }
 
 $stmt = $pdo->prepare("SELECT t.*, c.name as company_name FROM trips t JOIN companies c ON t.company_id = c.id WHERE t.id = ?");
 $stmt->execute([$trip_id]);
 $trip = $stmt->fetch();
-
 if (!$trip) {
-    echo "<p>Sefer bulunamadı.</p>";
-    return;
+    set_flash_message('Sefer bulunamadı.', 'error');
+    redirect('index.php');
 }
 
 $stmt = $pdo->prepare("SELECT seat_number FROM bookings WHERE trip_id = ?");
 $stmt->execute([$trip_id]);
-$booked_seats = $stmt->fetchAll(PDO::FETCH_COLUMN);
+$occupied_seats = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+include 'header.php';
 ?>
+
 <h1 class="text-3xl font-bold mb-2">Bilet Satın Al</h1>
-<p class="mb-6 text-lg"><?php echo htmlspecialchars($trip['departure_location']); ?> - <?php echo htmlspecialchars($trip['arrival_location']); ?> (<?php echo htmlspecialchars($trip['company_name']); ?>)</p>
+<p class="text-lg text-gray-600 mb-6"><?php echo htmlspecialchars($trip['departure_location']); ?> &rarr; <?php echo htmlspecialchars($trip['arrival_location']); ?></p>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
     <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold mb-4">Koltuk Seçimi</h2>
-        <div id="seat-map" class="mb-4">
-             <?php for ($i = 1; $i <= $trip['seat_count']; $i++): ?>
-                <div class="seat <?php echo in_array($i, $booked_seats) ? 'occupied' : 'empty'; ?>" data-seat-number="<?php echo $i; ?>">
+        <h2 class="text-2xl font-bold mb-4">Koltuk Seçimi</h2>
+        <div class="p-4 border rounded-lg bg-gray-50">
+            <?php for ($i = 1; $i <= $trip['seat_count']; $i++):
+                $is_occupied = in_array($i, $occupied_seats);
+                $seat_class = 'seat ' . ($is_occupied ? 'occupied' : 'empty');
+            ?>
+                <div class="<?php echo $seat_class; ?>" <?php if (!$is_occupied) echo "onclick='selectSeat(this, $i)'"; ?>>
                     <?php echo $i; ?>
                 </div>
             <?php endfor; ?>
         </div>
-        <p class="text-sm text-gray-500">* Lütfen bir koltuk seçin.</p>
     </div>
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold mb-4">Ödeme Detayları</h2>
-        <form action="index.php?action=buy_ticket" method="POST">
-            <input type="hidden" name="trip_id" value="<?php echo $trip_id; ?>">
-            <input type="hidden" name="seat_number" id="selected-seat-input" required>
-            
-            <div class="mb-4">
-                <p><strong>Seçilen Koltuk:</strong> <span id="selected-seat-display">Yok</span></p>
-                <p><strong>Fiyat:</strong> <?php echo number_format($trip['price'], 2); ?> TL</p>
-            </div>
-            
-            <div class="mb-4">
-               <label for="coupon_code" class="block mb-2">Kupon Kodu (opsiyonel)</label>
-               <input type="text" id="coupon_code" name="coupon_code" class="w-full p-2 border rounded bg-gray-50">
-            </div>
 
-            <button type="submit" id="buy-button" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400" disabled>Satın Al</button>
-        </form>
+    <div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">Ödeme Detayları</h2>
+            <form id="booking-form" action="biletal.php" method="POST">
+                <input type="hidden" name="trip_id" value="<?php echo $trip['id']; ?>">
+                <input type="hidden" id="selected-seat" name="seat_number" required>
+                <p><strong>Seçilen Koltuk:</strong> <span id="seat-display" class="font-bold">Yok</span></p>
+                <div class="my-4"><input type="text" name="coupon_code" class="w-full p-2 border rounded" placeholder="Kupon Kodu"></div>
+                <button type="submit" class="w-full bg-green-500 text-white p-3 rounded-md hover:bg-green-600">Satın Al</button>
+            </form>
+        </div>
     </div>
 </div>
+
 <script>
-    const seatMap = document.getElementById('seat-map');
-    const selectedSeatDisplay = document.getElementById('selected-seat-display');
-    const selectedSeatInput = document.getElementById('selected-seat-input');
-    const buyButton = document.getElementById('buy-button');
-    let currentSelected = null;
-
-    seatMap.addEventListener('click', (e) => {
-        const seat = e.target.closest('.seat.empty');
-        if (!seat) return;
-
-        if (currentSelected) {
-            currentSelected.classList.remove('selected');
-        }
-        
-        seat.classList.add('selected');
-        currentSelected = seat;
-
-        const seatNumber = seat.dataset.seatNumber;
-        selectedSeatDisplay.textContent = seatNumber;
-        selectedSeatInput.value = seatNumber;
-        buyButton.disabled = false;
-    });
+function selectSeat(element, seatNumber) {
+    document.querySelectorAll('.seat.selected').forEach(s => s.classList.remove('selected'));
+    element.classList.add('selected');
+    document.getElementById('selected-seat').value = seatNumber;
+    document.getElementById('seat-display').textContent = seatNumber;
+}
 </script>
+
+<?php include 'footer.php'; ?>
