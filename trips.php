@@ -1,8 +1,8 @@
-<?php 
-session_start();
+<?php
+// header.php dosyasını dahil etmeden önce config.php'yi dahil etmek en iyisidir
+// çünkü header içinde session ve helper'lar kullanılıyor olabilir.
 require_once 'config.php';
-require_once 'helpers.php';
-include 'header.php'; 
+require_once 'header.php'; 
 ?>
 <h1 class="text-3xl font-bold mb-6">Sefer Sonuçları</h1>
  <?php
@@ -12,7 +12,17 @@ $to = $_GET['to'] ?? '';
 if (empty($from) || empty($to)) {
     echo "<p>Lütfen kalkış ve varış noktası seçin.</p>";
 } else {
-    $stmt = $pdo->prepare("SELECT t.*, c.name as company_name FROM trips t JOIN companies c ON t.company_id = c.id WHERE t.departure_location LIKE ? AND t.arrival_location LIKE ? AND t.departure_time > datetime('now') ORDER BY t.departure_time");
+    // ---- SORGU GÜNCELLENDİ ----
+    // REPLACE fonksiyonu ile 'T' harfi boşluk ile değiştirilerek tarih karşılaştırması doğru hale getirildi.
+    $stmt = $pdo->prepare("SELECT t.*, c.name as company_name 
+                           FROM trips t 
+                           JOIN companies c ON t.company_id = c.id 
+                           WHERE t.departure_location LIKE ? 
+                           AND t.arrival_location LIKE ? 
+                           AND REPLACE(t.departure_time, 'T', ' ') > datetime('now') 
+                           ORDER BY t.departure_time");
+    // -------------------------
+
     $stmt->execute(["%$from%", "%$to%"]);
     $trips = $stmt->fetchAll();
 
@@ -27,11 +37,7 @@ if (empty($from) || empty($to)) {
                     </div>
                     <div class="text-right">
                         <p class="text-2xl font-bold text-blue-600"><?php echo number_format($trip['price'], 2); ?> TL</p>
-                        <?php if (is_logged_in()): ?>
-                            <a href="biletal.php?trip_id=<?php echo $trip['id']; ?>" class="mt-2 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Bilet Al</a>
-                        <?php else: ?>
-                            <a href="login.php" onclick="alert('Bilet almak için lütfen giriş yapın.');" class="mt-2 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Bilet Al</a>
-                        <?php endif; ?>
+                        <a href="biletal.php?trip_id=<?php echo $trip['id']; ?>" class="mt-2 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Bilet Al</a>
                     </div>
                 </div>
             </div>
