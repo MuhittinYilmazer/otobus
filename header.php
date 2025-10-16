@@ -24,11 +24,11 @@ if (session_status() === PHP_SESSION_NONE) {
               <!-- role göre panel gösterimi -->
                 <?php if (is_logged_in()): ?>
                     <?php if ($_SESSION['role'] === 'Admin'): ?>
-                        <a href="admin/" class="hover:text-blue-500">Admin Paneli</a>
+                        <a href="/admin/" class="hover:text-blue-500">Admin Paneli</a>
                     <?php elseif ($_SESSION['role'] === 'Firma Admin'): ?>
-                        <a href="firmaadmin/" class="hover:text-blue-500">Firma Paneli</a>
+                        <a href="/firmaadmin/" class="hover:text-blue-500">Firma Paneli</a>
                     <?php elseif ($_SESSION['role'] === 'User'): ?>
-                        <a href="hesabim.php" class="hover:text-blue-500">Hesabım</a>
+                        <a href="/my_account.php" class="hover:text-blue-500">Hesabım</a>
                     <?php endif; ?>
                     <a href="/logout.php" class="hover:text-blue-500">Çıkış Yap</a>
                 <?php else: ?>

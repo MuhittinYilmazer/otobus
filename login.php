@@ -1,8 +1,13 @@
 <?php
+// Oturumu en başta başlat
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once 'config.php';
 require_once 'helpers.php';
 
-// post isteği ile giriş yapma
+// POST isteği ile giriş yapma
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
@@ -11,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $query->execute([$email]);
     $user = $query->fetch();
 
-    // kullanıcı doğrulama ve session başlatma
+    // Kullanıcı doğrulama ve session başlatma
     if ($user && $password === $user['password']) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['fullname'] = $user['fullname'];

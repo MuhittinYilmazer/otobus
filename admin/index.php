@@ -156,10 +156,10 @@ include '../header.php';
 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
     <div class="md:col-span-2">
          <h2 class="text-2xl font-bold mb-4">Mevcut Kuponlar</h2>
-         <div class="bg-white rounded-lg shadow-md overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50"><tr><th class="p-3">Kod</th><th class="p-3">İndirim</th><th class="p-3">Son Tarih</th><th class="p-3">Firma</th><th class="p-3">İşlem</th></tr></thead>
+         <div class="bg-white rounded-lg shadow-md overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50"><tr><th class="p-3">Kod</th><th class="p-3">İndirim</th><th class="p-3">Kalan Hak</th><th class="p-3">Son Tarih</th><th class="p-3">Firma</th><th class="p-3">İşlem</th></tr></thead>
            <tbody>
                <?php foreach($coupons as $coupon): ?>
-               <tr class="border-t"><td class="p-3 font-mono"><?php echo htmlspecialchars($coupon['code']); ?></td><td class="p-3"><?php echo ($coupon['discount_rate'] * 100); ?>%</td><td class="p-3"><?php echo date('d M Y', strtotime($coupon['expiry_date'])); ?></td><td class="p-3"><?php echo $coupon['company_name'] ?? 'Tümü'; ?></td>
+               <tr class="border-t"><td class="p-3 font-mono"><?php echo htmlspecialchars($coupon['code']); ?></td><td class="p-3"><?php echo ($coupon['discount_rate'] * 100); ?>%</td><td class="p-3"><?php echo $coupon['usage_limit']; ?></td><td class="p-3"><?php echo date('d M Y', strtotime($coupon['expiry_date'])); ?></td><td class="p-3"><?php echo $coupon['company_name'] ?? 'Tümü'; ?></td>
                <td class="p-3">
                    <form action="index.php?tab=coupons&action=delete_coupon" method="POST" onsubmit="return confirm('Bu kuponu silmek istediğinize emin misiniz?');">
                        <input type="hidden" name="coupon_id" value="<?php echo $coupon['id']; ?>">

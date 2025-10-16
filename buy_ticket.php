@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($seat_number) || empty($trip_id)) {
         set_flash_message('Lütfen bir koltuk seçin.', 'error');
-        redirect("biletal.php?trip_id=$trip_id");
+        redirect("buy_ticket.php?trip_id=$trip_id");
     }
 
     $pdo->beginTransaction();
@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($query->fetch()) {
         $pdo->rollBack();
         set_flash_message('Seçtiğiniz koltuk siz işlem yaparken doldu.', 'error');
-        redirect("biletal.php?trip_id=$trip_id");
+        redirect("buy_ticket.php?trip_id=$trip_id");
     }
 
     $final_price = $trip['price'];
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($user['balance'] < $final_price) {
         $pdo->rollBack();
         set_flash_message('Yetersiz bakiye.', 'error');
-        redirect("biletal.php?trip_id=$trip_id");
+        redirect("buy_ticket.php?trip_id=$trip_id");
     }
 
     // bakiyeyi düş ve güncelle
@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pdo->commit();
 
     set_flash_message('Biletiniz başarıyla satın alındı!', 'success');
-    redirect('hesabim.php');
+    redirect('my_account.php');
 }
 
 // id yoksa yönlendir
@@ -113,7 +113,7 @@ include 'header.php';
     <div>
         <div class="bg-white p-6 rounded-lg shadow-md">
             <h2 class="text-2xl font-bold mb-4">Ödeme Detayları</h2>
-            <form id="booking-form" action="biletal.php" method="POST">
+            <form id="booking-form" action="buy_ticket.php" method="POST">
                 <input type="hidden" name="trip_id" value="<?php echo $trip['id']; ?>">
                 <input type="hidden" id="selected-seat" name="seat_number" required>
                 <p><strong>Seçilen Koltuk:</strong> <span id="seat-display" class="font-bold">Yok</span></p>

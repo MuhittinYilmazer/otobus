@@ -18,9 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($stmt->fetch()) {
             set_flash_message('Bu e-posta adresi zaten kayıtlı.', 'error');
         } else {
-            
+            // Sadece 'User' rolüyle ve şifreyle birlikte doğru kayıt yapılıyor.
             $role = 'User';
-            $stmt = $pdo->prepare("INSERT INTO users (fullname, email, password, role, company_id) VALUES (?, ?, ?, ?, NULL)");
+            $stmt = $pdo->prepare("INSERT INTO users (fullname, email, password, role) VALUES (?, ?, ?, ?)");
             $stmt->execute([$fullname, $email, $password, $role]);
 
             set_flash_message('Başarıyla kayıt oldunuz. Şimdi giriş yapabilirsiniz.', 'success');

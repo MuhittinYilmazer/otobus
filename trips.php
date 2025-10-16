@@ -1,7 +1,8 @@
 <?php
 
 require_once 'config.php';
-include 'header.php'; 
+require_once 'helpers.php'; // Bu satırı ekleyin
+include 'header.php';
 ?>
 <h1 class="text-3xl font-bold mb-6">Sefer Sonuçları</h1>
  <?php
@@ -39,7 +40,7 @@ if (empty($from) || empty($to)) {
                     <div class="text-right">
                         <p class="text-2xl font-bold text-blue-600"><?php echo number_format($trip['price'], 2); ?> TL</p>
                         <!-- bilet alma linki -->
-                        <a href="biletal.php?trip_id=<?php echo $trip['id']; ?>" class="mt-2 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Bilet Al</a>
+                        <a href="buy_ticket.php?trip_id=<?php echo $trip['id']; ?>" class="mt-2 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Bilet Al</a>
                     </div>
                 </div>
             </div>
