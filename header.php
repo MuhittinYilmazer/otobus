@@ -33,13 +33,14 @@ require_once 'helpers.php';
             <div class="flex items-center space-x-4">
                 <a href="index.php" class="hover:text-blue-500">Ana Sayfa</a>
                 <?php if (is_logged_in()): ?>
-                    <a href="hesabim.php" class="hover:text-blue-500">Hesabım</a>
                     <?php if ($_SESSION['role'] === 'Admin'): ?>
                         <a href="admin/" class="hover:text-blue-500">Admin Paneli</a>
                     <?php elseif ($_SESSION['role'] === 'Firma Admin'): ?>
                         <a href="firmaadmin/" class="hover:text-blue-500">Firma Paneli</a>
+                    <?php elseif ($_SESSION['role'] === 'User'): ?>
+                        <a href="hesabim.php" class="hover:text-blue-500">Hesabım</a>
                     <?php endif; ?>
-                    <a href="logout.php" class="hover:text-blue-500">Çıkış Yap</a>
+                    <a href="/logout.php" class="hover:text-blue-500">Çıkış Yap</a>
                 <?php else: ?>
                     <a href="login.php" class="hover:text-blue-500">Giriş Yap</a>
                     <a href="register.php" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Kayıt Ol</a>

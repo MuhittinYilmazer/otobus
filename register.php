@@ -16,22 +16,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = $_POST['role'] ?? 'User';
     $company_id = !empty($_POST['company_id']) ? $_POST['company_id'] : null;
 
-    // Basit doğrulama
     if (empty($fullname) || empty($email) || empty($password)) {
         set_flash_message('Tüm alanları doldurmak zorunludur.', 'error');
     } elseif ($role === 'Firma Admin' && empty($company_id)) {
         set_flash_message('Firma Admin rolü için bir firma seçmelisiniz.', 'error');
     } else {
-        // E-posta'nın zaten kayıtlı olup olmadığını kontrol et
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
             set_flash_message('Bu e-posta adresi zaten kayıtlı.', 'error');
         } else {
-            // Yeni kullanıcıyı ekle
-            $hashed_pass = password_hash($password, PASSWORD_DEFAULT);
+            // YENİ KULLANICI EKLEME (HASHLENMEDEN)
             $stmt = $pdo->prepare("INSERT INTO users (fullname, email, password, role, company_id) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$fullname, $email, $hashed_pass, $role, $company_id]);
+            $stmt->execute([$fullname, $email, $password, $role, $company_id]); // <-- Değişiklik burada
 
             set_flash_message('Başarıyla kayıt oldunuz. Şimdi giriş yapabilirsiniz.', 'success');
             redirect('login.php');
@@ -77,7 +74,6 @@ include 'header.php';
         <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 font-semibold">Kayıt Ol</button>
     </form>
 </div>
-
 <script>
     document.getElementById('role').addEventListener('change', function() {
         const companySelection = document.getElementById('company-selection');
@@ -88,5 +84,4 @@ include 'header.php';
         }
     });
 </script>
-
 <?php include 'footer.php'; ?>

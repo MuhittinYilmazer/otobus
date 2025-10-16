@@ -6,6 +6,7 @@ function is_logged_in() {
     return isset($_SESSION['user_id']);
 }
 
+// kullanıcı belli bir role sahip mi kontrol et
 function check_permission($allowed_roles = []) {
     if (!is_logged_in() || !in_array($_SESSION['role'], $allowed_roles)) {
         set_flash_message('Bu sayfaya erişim yetkiniz yok.', 'error');

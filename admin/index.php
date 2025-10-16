@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('index.php?tab=companies');
     }
 
-    // Yeni firma admini ekleme
+    // Yeni firma admini ekleme (Şifreler artık hashlenmiyor)
     if ($action === 'add_firma_admin') {
         $fullname = $_POST['fullname'] ?? '';
         $email = $_POST['email'] ?? '';
@@ -34,9 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $company_id = $_POST['company_id'] ?? null;
 
         if ($fullname && $email && $password && $company_id) {
-            $hashed_pass = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare("INSERT INTO users (fullname, email, password, role, company_id) VALUES (?, ?, ?, 'Firma Admin', ?)");
-            $stmt->execute([$fullname, $email, $hashed_pass, $company_id]);
+            $stmt->execute([$fullname, $email, $password, $company_id]);
             set_flash_message('Firma Admin başarıyla eklendi.', 'success');
         } else {
             set_flash_message('Lütfen tüm alanları doldurun.', 'error');
@@ -98,7 +97,7 @@ include '../header.php';
     $companies = $pdo->query("SELECT * FROM companies ORDER BY name")->fetchAll();
 ?>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-    <div class="md-col-span-2">
+    <div class="md:col-span-2">
          <h2 class="text-2xl font-bold mb-4">Mevcut Firmalar</h2>
         <div class="bg-white rounded-lg shadow-md overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50"><tr><th class="p-3">ID</th><th class="p-3">Firma Adı</th></tr></thead>
            <tbody>
@@ -124,35 +123,18 @@ include '../header.php';
 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
     <div class="md:col-span-2">
          <h2 class="text-2xl font-bold mb-4">Mevcut Firma Adminleri</h2>
-         <div class="bg-white rounded-lg shadow-md overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="p-3">Ad</th>
-                        <th class="p-3">E-posta</th>
-                        <th class="p-3">Şifre (Kriptolu)</th>
-                        <th class="p-3">Atanan Firma</th>
-                        <th class="p-3">İşlem</th>
-                    </tr>
-                </thead>
-               <tbody>
-                   <?php foreach($firma_admins as $admin): ?>
-                   <tr class="border-t">
-                       <td class="p-3"><?php echo htmlspecialchars($admin['fullname']); ?></td>
-                       <td class="p-3"><?php echo htmlspecialchars($admin['email']); ?></td>
-                       <td class="p-3 font-mono text-xs" title="<?php echo htmlspecialchars($admin['password']); ?>"><?php echo htmlspecialchars(substr($admin['password'], 0, 20)); ?>...</td>
-                       <td class="p-3"><?php echo htmlspecialchars($admin['company_name']); ?></td>
-                       <td class="p-3">
-                           <form action="index.php?tab=admins&action=delete_firma_admin" method="POST" onsubmit="return confirm('Bu admini silmek istediğinize emin misiniz?');">
-                               <input type="hidden" name="admin_id" value="<?php echo $admin['id']; ?>">
-                               <button type="submit" class="text-red-500 hover:underline">Sil</button>
-                           </form>
-                       </td>
-                   </tr>
-                   <?php endforeach; ?>
-               </tbody>
-            </table>
-         </div>
+         <div class="bg-white rounded-lg shadow-md overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50"><tr><th class="p-3">Ad</th><th class="p-3">E-posta</th><th class="p-3">Şifre</th><th class="p-3">Atanan Firma</th><th class="p-3">İşlem</th></tr></thead>
+           <tbody>
+               <?php foreach($firma_admins as $admin): ?>
+               <tr class="border-t"><td class="p-3"><?php echo htmlspecialchars($admin['fullname']); ?></td><td class="p-3"><?php echo htmlspecialchars($admin['email']); ?></td><td class="p-3 font-mono"><?php echo htmlspecialchars($admin['password']); ?></td><td class="p-3"><?php echo htmlspecialchars($admin['company_name']); ?></td>
+               <td class="p-3">
+                   <form action="index.php?tab=admins&action=delete_firma_admin" method="POST" onsubmit="return confirm('Bu admini silmek istediğinize emin misiniz?');">
+                       <input type="hidden" name="admin_id" value="<?php echo $admin['id']; ?>">
+                       <button type="submit" class="text-red-500 hover:underline">Sil</button>
+                   </form>
+               </td></tr>
+               <?php endforeach; ?>
+           </tbody></table></div>
     </div>
     <div>
          <h2 class="text-2xl font-bold mb-4">Yeni Firma Admin Ekle</h2>

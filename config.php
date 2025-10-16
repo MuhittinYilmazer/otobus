@@ -1,29 +1,25 @@
 <?php
-// Configuration and Database Initialization
-
-// Define the database file path using an absolute path
+// database yolu
 define('DB_PATH', __DIR__ . '/database/database.sqlite');
 define('DB_DIR', __DIR__ . '/database');
 
-/**
- * Initializes the database connection and creates tables if they don't exist.
- * Also seeds the database with initial data for demonstration.
- * @return PDO
- */
+
 function get_db_connection() {
+    // dosya yoksa oluştur
     if (!is_dir(DB_DIR)) {
         mkdir(DB_DIR, 0777, true);
     }
 
     try {
+        // pdo ile sqlite bağlantısı
         $pdo = new PDO('sqlite:' . DB_PATH);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
-        // Check if the database needs to be initialized.
+        // user tablosu yoksa oluştur ve başlangıç verisi ekle
         $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='users'");
         if ($stmt->fetch() === false) {
-            // Create Tables
+            // tabloları oluştur
             $pdo->exec("CREATE TABLE users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT, fullname TEXT NOT NULL, email TEXT NOT NULL UNIQUE,
                 password TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'User', company_id INTEGER,
@@ -46,12 +42,12 @@ function get_db_connection() {
                 FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE SET NULL
             )");
 
-            // Seed Data
+            // başlangıç verisi ekle
             $pdo->exec("INSERT INTO companies (name) VALUES ('Kamil Koç'), ('Metro Turizm'), ('Pamukkale Turizm')");
-            $hashed_pass = password_hash('123456', PASSWORD_DEFAULT);
-            $pdo->exec("INSERT INTO users (fullname, email, password, role, balance) VALUES ('Admin User', 'admin@example.com', '$hashed_pass', 'Admin', 1000)");
-            $pdo->exec("INSERT INTO users (fullname, email, password, role, company_id) VALUES ('Kamil Koç Admin', 'kamilex@example.com', '$hashed_pass', 'Firma Admin', 1)");
-            $pdo->exec("INSERT INTO users (fullname, email, password, role, balance) VALUES ('Normal User', 'user@example.com', '$hashed_pass', 'User', 500)");
+            $plain_pass = 'asd'; // başlangıç şifresi
+            $pdo->exec("INSERT INTO users (fullname, email, password, role, balance) VALUES ('Admin User', 'admin@example.com', '$plain_pass', 'Admin', 1000)");
+            $pdo->exec("INSERT INTO users (fullname, email, password, role, company_id) VALUES ('Kamil Koç Admin', 'kamilex@example.com', '$plain_pass', 'Firma Admin', 1)");
+            $pdo->exec("INSERT INTO users (fullname, email, password, role, balance) VALUES ('Normal User', 'user@example.com', '$plain_pass', 'User', 500)");
             $pdo->exec("INSERT INTO trips (company_id, departure_location, arrival_location, departure_time, price, seat_count) VALUES (1, 'İstanbul', 'Ankara', '2025-10-25 08:00:00', 250.0, 40)");
             $pdo->exec("INSERT INTO trips (company_id, departure_location, arrival_location, departure_time, price, seat_count) VALUES (2, 'İzmir', 'Antalya', '2025-10-26 10:30:00', 300.0, 42)");
             $pdo->exec("INSERT INTO coupons (code, discount_rate, usage_limit, expiry_date) VALUES ('GENEL10', 0.10, 100, '2025-12-31')");
@@ -63,5 +59,5 @@ function get_db_connection() {
     }
 }
 
-// Global database connection
+// veritabanı bağlantısını başlat
 $pdo = get_db_connection();
