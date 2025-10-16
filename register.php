@@ -5,20 +5,24 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once 'config.php';
 require_once 'helpers.php';
 
+// post isteğiyle form gönderildiyse
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // form verilerini al
     $fullname = $_POST['fullname'] ?? '';
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     
+    // basit doğrulamalar
     if (empty($fullname) || empty($email) || empty($password)) {
         set_flash_message('Tüm alanları doldurmak zorunludur.', 'error');
     } else {
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        if ($stmt->fetch()) {
+        // önceden kayıtlı email kontrolü
+        $query = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $query->execute([$email]);
+        if ($query->fetch()) {
             set_flash_message('Bu e-posta adresi zaten kayıtlı.', 'error');
         } else {
-            // Sadece 'User' rolüyle ve şifreyle birlikte doğru kayıt yapılıyor.
+            // kullanıcıyı ekle
             $role = 'User';
             $stmt = $pdo->prepare("INSERT INTO users (fullname, email, password, role) VALUES (?, ?, ?, ?)");
             $stmt->execute([$fullname, $email, $password, $role]);

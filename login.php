@@ -1,5 +1,4 @@
 <?php
-// Oturumu en başta başlat
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -7,11 +6,12 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once 'config.php';
 require_once 'helpers.php';
 
-// POST isteği ile giriş yapma
+// post isteğiyle form gönderildiyse
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
 
+    // kullanıcıyı veritabanında bul
     $query = $pdo->prepare("SELECT * FROM users WHERE email = ?");
     $query->execute([$email]);
     $user = $query->fetch();

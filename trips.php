@@ -10,7 +10,7 @@ include 'header.php';
 $from = $_GET['from'] ?? '';
 $to = $_GET['to'] ?? '';
 
-// boşsa uyarı ver
+// parametreler boşsa uyarı ver
 if (empty($from) || empty($to)) {
     echo "<p>Lütfen kalkış ve varış noktası seçin.</p>";
 } else {
@@ -27,7 +27,7 @@ if (empty($from) || empty($to)) {
     $query->execute(["%$from%", "%$to%"]);
     $trips = $query->fetchAll();
 
-    // sefer sayısı 0 dan büyükse listele
+    // sefer sayısı 0 dan büyükse hepsini sırasıyla listele
     if (count($trips) > 0) {
         foreach ($trips as $trip) { ?>
             <div class="bg-white rounded-lg shadow-md p-4 mb-4">

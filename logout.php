@@ -1,5 +1,5 @@
 <?php
-// Oturumu güvenli bir şekilde başlat
+// oturumu sonlandır ve anasayfaya yönlendir
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
