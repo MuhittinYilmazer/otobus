@@ -1,4 +1,5 @@
 <?php 
+require_once 'helpers.php';
 include 'header.php';
 ?>
 

@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-include 'header.php';
+require_once 'helpers.php';
 
 // post isteği ile giriş yapma
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -24,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         set_flash_message('Geçersiz e-posta veya şifre.', 'error');
     }
 }
+include 'header.php';
 
 ?>
 
