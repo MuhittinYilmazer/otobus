@@ -1,0 +1,40 @@
+1- sql sorgularını açıkla
+-- Dosyalar:
+ view_ticket.php:
+ // kullanıcı sadece kendi biletini görsün
+$sql = "SELECT b.*, u.fullname, t.departure_location, t.arrival_location, t.departure_time, c.name as company_name 
+        FROM bookings b 
+        JOIN users u ON b.user_id = u.id 
+        JOIN trips t ON b.trip_id = t.id 
+        JOIN companies c ON t.company_id = c.id 
+        WHERE b.id = ?";
+
+trips.php:
+// seferleri çek
+    $query = $pdo->prepare("SELECT t.*, c.name as company_name 
+                           FROM trips t 
+                           JOIN companies c ON t.company_id = c.id 
+                           WHERE t.departure_location LIKE ? 
+                           AND t.arrival_location LIKE ? 
+                           AND REPLACE(t.departure_time, 'T', ' ') > datetime('now') 
+                           ORDER BY t.departure_time");
+
+    $query->execute(["%$from%", "%$to%"]);
+    $trips = $query->fetchAll();
+buy_ticket.php:
+// öyle bir sefer id'si yoksa yönlendir
+    $query = $pdo->prepare("SELECT t.*, c.name as company_name FROM trips t JOIN companies c ON t.company_id = c.id WHERE t.id = ?");
+    $query->execute([$trip_id]);
+    $trip = $query->fetch();
+    if (!$trip) {
+        set_flash_message('Sefer bulunamadı.', 'error');
+        redirect('index.php');
+    }
+firmaadmin/index.php:
+// Firma Admini tarafından bilet iptali
+    if ($action === 'cancel_booking') {
+        $booking_id = $_POST['booking_id'] ?? 0;
+        $query = $pdo->prepare("SELECT b.id, b.user_id, b.price_paid, t.company_id FROM bookings b JOIN trips t ON b.trip_id = t.id WHERE b.id = ?");
+        $query->execute([$booking_id]);
+        $booking = $query->fetch();
+2- yorum satırları ekle

@@ -19,11 +19,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'add_company') {
         $name = $_POST['name'] ?? '';
         if (!empty($name)) {
-            $stmt = $pdo->prepare("INSERT INTO companies (name) VALUES (?)");
-            $stmt->execute([$name]);
+            $query = $pdo->prepare("INSERT INTO companies (name) VALUES (?)");
+            $query->execute([$name]);
             set_flash_message('Firma başarıyla eklendi.', 'success');
         }
         redirect('index.php?tab=companies');
+    }
+    
+    // Firma silme HAZIR DEĞİL -----------------------------------------------
+    if ($action === 'delete_company') {
+        $admin_id = $_POST['company_id'] ?? 0;
+        $query = $pdo->prepare("DELETE FROM companies WHERE id = ? AND role = 'Firma Admin'");
+        $query->execute([$admin_id]);
+        set_flash_message('Firma başarıyla silindi.', 'success');
+        redirect('index.php?tab=admins');
     }
 
     // Yeni firma admini ekleme (Şifreler artık hashlenmiyor)
@@ -102,7 +111,9 @@ include '../header.php';
         <div class="bg-white rounded-lg shadow-md overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50"><tr><th class="p-3">ID</th><th class="p-3">Firma Adı</th></tr></thead>
            <tbody>
                <?php foreach($companies as $company): ?>
-               <tr class="border-t"><td class="p-3"><?php echo $company['id']; ?></td><td class="p-3"><?php echo htmlspecialchars($company['name']); ?></td></tr>
+               <tr class="border-t"><td class="p-3"><?php echo $company['id']; ?></td><td class="p-3"><?php echo htmlspecialchars($company['name']); ?></td>
+                                   <input type="hidden" name="admin_id" value="<?php echo $admin['id']; ?>">
+</tr>
                <?php endforeach; ?>
            </tbody></table></div>
     </div>
