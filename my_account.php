@@ -25,19 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $booking = $query->fetch();
 
         if ($booking) {
-            // kalkışa 1 saatten az kaldıysa iptal edilemez
-            $can_cancel = (new DateTime($booking['departure_time']) > (new DateTime())->add(new DateInterval('PT1H')));
-            if ($can_cancel) {
-                // ücret iade etme
-                $pdo->prepare("UPDATE users SET balance = balance + ? WHERE id = ?")->execute([$booking['price_paid'], $user_id]);
-                // bileti silme
-                $pdo->prepare("DELETE FROM bookings WHERE id = ?")->execute([$booking_id]);
-                $pdo->commit();
-                set_flash_message('Bilet iptal edildi ve ücret iade edildi.', 'success');
-            } else {
-                $pdo->rollBack();
-                set_flash_message('Kalkışa 1 saatten az kaldığı için bilet iptal edilemez.', 'error');
-            }
+        
+            // ücret iade etme
+            $pdo->prepare("UPDATE users SET balance = balance + ? WHERE id = ?")->execute([$booking['price_paid'], $user_id]);
+            // bileti silme
+            $pdo->prepare("DELETE FROM bookings WHERE id = ?")->execute([$booking_id]);
+            $pdo->commit();
+            set_flash_message('Bilet iptal edildi ve ücret iade edildi.', 'success');
+            
         }
         redirect('my_account.php');
     }
