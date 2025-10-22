@@ -1,8 +1,5 @@
 <?php
-// Gerekli dosyaları ve oturumu başlat
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+session_start();
 require_once '../config.php';
 require_once '../helpers.php';
 
@@ -20,16 +17,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $departure_time = $_POST['departure_time'] ?? '';
         $price = $_POST['price'] ?? 0;
         $seat_count = $_POST['seat_count'] ?? 0;
-        $stmt = $pdo->prepare("INSERT INTO trips (company_id, departure_location, arrival_location, departure_time, price, seat_count) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$company_id, $departure_location, $arrival_location, $departure_time, $price, $seat_count]);
+        $query = $pdo->prepare("INSERT INTO trips (company_id, departure_location, arrival_location, departure_time, price, seat_count) VALUES (?, ?, ?, ?, ?, ?)");
+        $query->execute([$company_id, $departure_location, $arrival_location, $departure_time, $price, $seat_count]);
         set_flash_message('Yeni sefer başarıyla eklendi.', 'success');
         redirect('index.php?tab=trips');
     }
     // Sefer Silme
     if ($action === 'delete_trip') {
         $trip_id = $_POST['trip_id'] ?? 0;
-        $stmt = $pdo->prepare("DELETE FROM trips WHERE id = ? AND company_id = ?");
-        $stmt->execute([$trip_id, $company_id]);
+        $query = $pdo->prepare("DELETE FROM trips WHERE id = ? AND company_id = ?");
+        $query->execute([$trip_id, $company_id]);
         set_flash_message('Sefer başarıyla silindi.', 'success');
         redirect('index.php?tab=trips');
     }
@@ -40,8 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $usage_limit = $_POST['usage_limit'] ?? 0;
         $expiry_date = $_POST['expiry_date'] ?? '';
         if ($code && $discount_rate && $usage_limit && $expiry_date) {
-            $stmt = $pdo->prepare("INSERT INTO coupons (code, discount_rate, usage_limit, expiry_date, company_id) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$code, $discount_rate, $usage_limit, $expiry_date, $company_id]);
+            $query = $pdo->prepare("INSERT INTO coupons (code, discount_rate, usage_limit, expiry_date, company_id) VALUES (?, ?, ?, ?, ?)");
+            $query->execute([$code, $discount_rate, $usage_limit, $expiry_date, $company_id]);
             set_flash_message('Kupon başarıyla eklendi.', 'success');
         } else {
             set_flash_message('Lütfen tüm alanları doldurun.', 'error');
@@ -51,24 +48,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Kupon Silme
     if ($action === 'delete_coupon') {
         $coupon_id = $_POST['coupon_id'] ?? 0;
-        $stmt = $pdo->prepare("DELETE FROM coupons WHERE id = ? AND company_id = ?");
-        $stmt->execute([$coupon_id, $company_id]);
+        $query = $pdo->prepare("DELETE FROM coupons WHERE id = ? AND company_id = ?");
+        $query->execute([$coupon_id, $company_id]);
         set_flash_message('Kupon başarıyla silindi.', 'success');
         redirect('index.php?tab=coupons');
     }
     // Firma Admini tarafından bilet iptali
     if ($action === 'cancel_booking') {
         $booking_id = $_POST['booking_id'] ?? 0;
-        $stmt = $pdo->prepare("SELECT b.id, b.user_id, b.price_paid, t.company_id FROM bookings b JOIN trips t ON b.trip_id = t.id WHERE b.id = ?");
-        $stmt->execute([$booking_id]);
-        $booking = $stmt->fetch();
+        $query = $pdo->prepare("SELECT b.id, b.user_id, b.price_paid, t.company_id FROM bookings b JOIN trips t ON b.trip_id = t.id WHERE b.id = ?");
+        $query->execute([$booking_id]);
+        $booking = $query->fetch();
         if ($booking && $booking['company_id'] == $company_id) {
             $pdo->beginTransaction();
             try {
-                $stmt = $pdo->prepare("UPDATE users SET balance = balance + ? WHERE id = ?");
-                $stmt->execute([$booking['price_paid'], $booking['user_id']]);
-                $stmt = $pdo->prepare("DELETE FROM bookings WHERE id = ?");
-                $stmt->execute([$booking['id']]);
+                $query = $pdo->prepare("UPDATE users SET balance = balance + ? WHERE id = ?");
+                $query->execute([$booking['price_paid'], $booking['user_id']]);
+                $query = $pdo->prepare("DELETE FROM bookings WHERE id = ?");
+                $query->execute([$booking['id']]);
                 $pdo->commit();
                 set_flash_message('Bilet başarıyla iptal edildi ve ücret iadesi yapıldı.', 'success');
             } catch (Exception $e) {
@@ -96,9 +93,9 @@ include '../header.php';
 </div>
 
 <?php if ($tab === 'trips'): 
-    $stmt = $pdo->prepare("SELECT * FROM trips WHERE company_id = ? ORDER BY departure_time DESC");
-    $stmt->execute([$company_id]);
-    $trips = $stmt->fetchAll();
+    $query = $pdo->prepare("SELECT * FROM trips WHERE company_id = ? ORDER BY departure_time DESC");
+    $query->execute([$company_id]);
+    $trips = $query->fetchAll();
 ?>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
     <div class="md:col-span-2">
@@ -139,9 +136,9 @@ include '../header.php';
 </div>
 
 <?php elseif ($tab === 'bookings'): 
-    $stmt = $pdo->prepare("SELECT b.*, t.departure_location, t.arrival_location, t.departure_time, u.fullname FROM bookings b JOIN trips t ON b.trip_id = t.id JOIN users u ON b.user_id = u.id WHERE t.company_id = ? ORDER BY t.departure_time DESC");
-    $stmt->execute([$company_id]);
-    $bookings = $stmt->fetchAll();
+    $query = $pdo->prepare("SELECT b.*, t.departure_location, t.arrival_location, t.departure_time, u.fullname FROM bookings b JOIN trips t ON b.trip_id = t.id JOIN users u ON b.user_id = u.id WHERE t.company_id = ? ORDER BY t.departure_time DESC");
+    $query->execute([$company_id]);
+    $bookings = $query->fetchAll();
 ?>
 <h2 class="text-2xl font-bold mb-4">Satılan Biletler</h2>
 <div class="bg-white rounded-lg shadow-md overflow-x-auto">
@@ -171,9 +168,9 @@ include '../header.php';
 </div>
 
 <?php elseif ($tab === 'coupons'):
-    $stmt = $pdo->prepare("SELECT * FROM coupons WHERE company_id = ? ORDER BY expiry_date DESC");
-    $stmt->execute([$company_id]);
-    $coupons = $stmt->fetchAll();
+    $query = $pdo->prepare("SELECT * FROM coupons WHERE company_id = ? ORDER BY expiry_date DESC");
+    $query->execute([$company_id]);
+    $coupons = $query->fetchAll();
 ?>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
     <div class="md:col-span-2">

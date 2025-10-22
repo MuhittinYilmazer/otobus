@@ -9,15 +9,15 @@ if (session_status() === PHP_SESSION_NONE) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Otobüs Bileti Satın Alma Platformu</title>
-    <link href="tailwind.min.css" rel="stylesheet">
+    <title>Hermes</title>
+    <link href="/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-gray-100 text-gray-800">
     <nav class="bg-white shadow-md">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <a href="index.php" class="text-2xl font-bold text-blue-600">BiletAl</a>
+            <a href="index.php" class="text-2xl font-bold text-blue-600">Hermes Turizm</a>
             <div class="flex items-center space-x-4">
                 <a href="index.php" class="hover:text-blue-500">Ana Sayfa</a>
 

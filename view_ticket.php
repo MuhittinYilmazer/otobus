@@ -9,7 +9,7 @@ check_permission(['User', 'Firma Admin']);
 
 $booking_id = (int)($_GET['booking_id'] ?? 1);
 
-// kullanıcı sadece kendi biletini görsün
+// kullanıcı biletini görsün. tabloları birleştirerek gerekli bilgileri çek
 $sql = "SELECT b.*, u.fullname, t.departure_location, t.arrival_location, t.departure_time, c.name as company_name 
         FROM bookings b 
         JOIN users u ON b.user_id = u.id 
@@ -35,7 +35,7 @@ if(!$ticket) {
 // bilet varsa kodu devam ettir
 include 'header.php';?>
 <style>
-    /* Sadece yazdırma sırasında uygulanacak stiller */
+    /* bilet için style */
     @media print {
         body * {
             visibility: hidden; 

@@ -38,3 +38,4 @@ firmaadmin/index.php:
         $query->execute([$booking_id]);
         $booking = $query->fetch();
 2- yorum satırları ekle
+3- firma silme ekle
